@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Warm neutral light surfaces */
+  --background: #FBFBFA;
+  --foreground: #18181B;
+
+  --surface: #FFFFFF;
+  --surface-muted: #F4F3EF;
+  --surface-subtle: #ECEAE3;
+  --surface-card: #FFFFFF;
+  --surface-border: #E4E1DA;
+
+  /* Restrained Academic Terracotta Accent */
+  --primary: #C2410C;
+  --primary-hover: #9A3412;
+  --primary-light: #FFEDD5;
+  --primary-foreground: #FFFFFF;
+
+  /* Ink shades */
+  --ink-primary: #191816;
+  --ink-secondary: #57534E;
+  --ink-muted: #78716C;
+  --ink-faint: #A8A29E;
+
+  /* Semantic */
+  --success: #15803D;
+  --success-bg: #F0FDF4;
+  --warning: #B45309;
+  --warning-bg: #FFFBEB;
+  --danger: #B91C1C;
+  --danger-bg: #FEF2F2;
+  --info: #0369A1;
+  --info-bg: #F0F9FF;
+}
+
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Urdu typography enhancements */
+  [dir="rtl"],
+  .font-urdu {
+    font-family: var(--font-urdu, "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Arabic Typesetting", Tahoma, sans-serif);
+    line-height: 2.1;
+    letter-spacing: 0;
+  }
+
+  [dir="rtl"] p,
+  [dir="rtl"] li,
+  [dir="rtl"] span {
+    line-height: 2.2;
+  }
+
+  /* Focus ring for accessibility */
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+}
+
+/* KaTeX custom styles */
+.katex-display {
+  margin: 1.25rem 0 !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.75rem 0;
+}
+
+.math-inline {
+  display: inline-block;
+  padding: 0 0.2rem;
+}
