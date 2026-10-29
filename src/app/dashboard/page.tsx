@@ -12,6 +12,8 @@ import {
   ArrowRight,
   Loader2,
   Plus,
+  User,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -132,10 +134,19 @@ export default function DashboardPage() {
               <BookOpen className="h-6 w-6 text-brand-600" />
               <span className="font-semibold text-ink-primary">Student Hub</span>
             </Link>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-ink-secondary">
-                Welcome, {user.fullName}
-              </span>
+            <div className="flex items-center gap-3">
+              <Link href="/profile">
+                <Button variant="ghost" size="sm">
+                  <User className="h-4 w-4 mr-2" />
+                  Profile
+                </Button>
+              </Link>
+              <Link href="/settings">
+                <Button variant="ghost" size="sm">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </Button>
+              </Link>
               <Button variant="outline" size="sm" onClick={() => router.push("/logout")}>
                 Log Out
               </Button>

@@ -72,19 +72,30 @@ export default function PlannerPage() {
     setSubmitting(true);
 
     try {
+      const payload = {
+        title: newTask.title,
+        description: newTask.description || undefined,
+        dueDate: newTask.dueDate || undefined,
+        priority: newTask.priority,
+      };
+
       const res = await fetch("/api/planner/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newTask),
+        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Failed to create task");
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to create task");
+      }
 
       setShowAddModal(false);
       setNewTask({ title: "", description: "", dueDate: "", priority: "medium" });
       fetchTasks();
     } catch (err) {
       console.error("Error creating task:", err);
+      alert("Failed to create task. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -300,13 +311,19 @@ export default function PlannerPage() {
             <h2 className="text-xl font-semibold text-ink-primary mb-4">Add Study Task</h2>
 
             <form onSubmit={handleAddTask} className="space-y-4">
-              <Input
-                label="Task Title"
-                placeholder="e.g., Complete Chapter 1 exercises"
-                value={newTask.title}
-                onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                required
-              />
+              <div>
+                <label className="block text-sm font-medium text-ink-primary mb-2">
+                  Task Title *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., Complete Chapter 1 exercises"
+                  value={newTask.title}
+                  onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                  required
+                  className="w-full px-4 py-3 border border-surface-border rounded-lg bg-surface text-ink-primary focus:outline-none focus:ring-2 focus:ring-brand-600"
+                />
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-ink-primary mb-2">

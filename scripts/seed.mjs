@@ -1,5 +1,5 @@
-import { initDatabase } from "../src/lib/db/index.js";
-import { seedDatabase } from "../src/lib/db/seed-data.js";
+import { initDatabase } from "../src/lib/db/index.ts";
+import { seedDatabase } from "../src/lib/db/seed-data.ts";
 
 async function run() {
   try {

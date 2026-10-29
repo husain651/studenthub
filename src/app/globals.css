@@ -36,6 +36,40 @@
   --info-bg: #F0F9FF;
 }
 
+.dark {
+  /* Dark mode surfaces */
+  --background: #1A1A1A;
+  --foreground: #E4E4E7;
+
+  --surface: #262626;
+  --surface-muted: #2A2A2A;
+  --surface-subtle: #333333;
+  --surface-card: #262626;
+  --surface-border: #404040;
+
+  /* Accent colors in dark mode */
+  --primary: #FB923C;
+  --primary-hover: #FDBA74;
+  --primary-light: #7C2D12;
+  --primary-foreground: #1A1A1A;
+
+  /* Ink shades for dark mode */
+  --ink-primary: #FAFAFA;
+  --ink-secondary: #A1A1AA;
+  --ink-muted: #71717A;
+  --ink-faint: #52525B;
+
+  /* Semantic colors in dark mode */
+  --success: #4ADE80;
+  --success-bg: #14532D;
+  --warning: #FBBF24;
+  --warning-bg: #713F12;
+  --danger: #F87171;
+  --danger-bg: #7F1D1D;
+  --info: #38BDF8;
+  --info-bg: #0C4A6E;
+}
+
 @layer base {
   body {
     background-color: var(--background);

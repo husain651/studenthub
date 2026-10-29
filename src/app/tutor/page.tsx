@@ -16,6 +16,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { LessonContent } from "@/components/reader/lesson-content";
+
+const containsUrdu = (text: string) => /[\u0600-\u06FF]/.test(text);
 
 interface Conversation {
   id: string;
@@ -103,12 +106,12 @@ export default function TutorPage() {
       });
 
       if (!res.ok) {
-        const error = await res.json();
+        const error = await res.json().catch(() => ({}));
         if (error.error === "Daily AI limit reached") {
           alert(`You've reached your daily AI limit of ${error.limit} questions. Upgrade your plan for more.`);
           return;
         }
-        throw new Error("Failed to create conversation");
+        throw new Error(error.error || "Failed to create conversation");
       }
 
       const json = await res.json();
@@ -143,13 +146,13 @@ export default function TutorPage() {
       });
 
       if (!res.ok) {
-        const error = await res.json();
+        const error = await res.json().catch(() => ({}));
         if (error.error === "Daily AI limit reached") {
           alert(`You've reached your daily AI limit of ${error.limit} questions. Upgrade your plan for more.`);
           setInputMessage(tempMessage);
           return;
         }
-        throw new Error("Failed to send message");
+        throw new Error(error.error || "Failed to send message");
       }
 
       const json = await res.json();
@@ -297,9 +300,18 @@ export default function TutorPage() {
                               : "bg-surface-muted text-ink-primary"
                           }`}
                         >
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                            {message.content}
-                          </p>
+                          {message.sender_role === "user" ? (
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                              {message.content}
+                            </p>
+                          ) : (
+                            <div className="text-sm">
+                              <LessonContent
+                                content={message.content}
+                                language={containsUrdu(message.content) ? "ur" : "en"}
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}

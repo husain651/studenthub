@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { query, queryOne } from "@/lib/db";
-import { getAIProvider, AIContext } from "@/lib/ai/provider";
+import { getAIProvider, AIContext, describeAIError } from "@/lib/ai/provider";
 
 const sendMessageSchema = z.object({
   content: z.string().min(1, "Message is required"),
@@ -117,17 +117,13 @@ export async function POST(
 
     const { content } = validation.data;
 
-    // Save user message
-    const userMessageId = `msg-${conversationId}-user-${Date.now()}`;
-    await query(
-      `INSERT INTO ai_messages (id, conversation_id, sender_role, content)
-       VALUES ($1, $2, 'user', $3)`,
-      [userMessageId, conversationId, content]
-    );
-
-    // Update conversation timestamp
-    await query(
-      `UPDATE ai_conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+    // Load recent turns so the tutor keeps the thread of the conversation
+    const historyRows = await query<{ sender_role: "user" | "assistant"; content: string }>(
+      `SELECT sender_role, content
+       FROM ai_messages
+       WHERE conversation_id = $1
+       ORDER BY created_at DESC
+       LIMIT 20`,
       [conversationId]
     );
 
@@ -151,34 +147,70 @@ export async function POST(
       if (topic) topicTitle = topic.title_en;
     }
 
-    // Generate AI response
+    // Generate the reply before persisting, so a failed AI call leaves no orphaned
+    // user message and the student can retry cleanly.
     const aiProvider = getAIProvider();
     const aiContext: AIContext = {
       subject: subjectName || undefined,
       topic: topicTitle || undefined,
       language: user.preferredLanguage || "en",
+      conversationHistory: [...historyRows].reverse().map((row) => ({
+        role: row.sender_role,
+        content: row.content,
+      })),
     };
 
-    const aiResponse = await aiProvider.generateResponse(content, aiContext);
+    let aiReply;
+    try {
+      aiReply = await aiProvider.generateResponse(content, aiContext);
+    } catch (error) {
+      console.error("AI generation failed:", error);
+      const { message, status } = describeAIError(error);
+      return NextResponse.json({ error: message }, { status });
+    }
+
+    // Save user message
+    const userMessageId = `msg-${crypto.randomUUID()}`;
+    await query(
+      `INSERT INTO ai_messages (id, conversation_id, sender_role, content)
+       VALUES ($1, $2, 'user', $3)`,
+      [userMessageId, conversationId, content]
+    );
+
+    // Update conversation timestamp
+    await query(
+      `UPDATE ai_conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+      [conversationId]
+    );
 
     // Save AI message
-    const assistantMessageId = `msg-${conversationId}-assistant-${Date.now()}`;
+    const assistantMessageId = `msg-${crypto.randomUUID()}`;
     await query(
       `INSERT INTO ai_messages (id, conversation_id, sender_role, content)
        VALUES ($1, $2, 'assistant', $3)`,
-      [assistantMessageId, conversationId, aiResponse]
+      [assistantMessageId, conversationId, aiReply.content]
     );
 
     // Log usage event
     await query(
       `INSERT INTO ai_usage_events (id, user_id, conversation_id, query_tokens, response_tokens)
-       VALUES ($1, $2, $3, 0, 0)`,
-      [`usage-${conversationId}-${Date.now()}`, user.id, conversationId]
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        `usage-${crypto.randomUUID()}`,
+        user.id,
+        conversationId,
+        aiReply.usage.queryTokens,
+        aiReply.usage.responseTokens,
+      ]
     );
 
     return NextResponse.json({
       userMessage: { id: userMessageId, role: "user", content },
-      assistantMessage: { id: assistantMessageId, role: "assistant", content: aiResponse },
+      assistantMessage: {
+        id: assistantMessageId,
+        role: "assistant",
+        content: aiReply.content,
+      },
     });
   } catch (error) {
     console.error("Error sending message:", error);

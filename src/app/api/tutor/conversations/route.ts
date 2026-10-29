@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { query, queryOne } from "@/lib/db";
-import { getAIProvider, AIContext } from "@/lib/ai/provider";
+import { getAIProvider, AIContext, describeAIError } from "@/lib/ai/provider";
 
 const createConversationSchema = z.object({
   subjectId: z.string().optional(),
@@ -106,7 +106,6 @@ export async function POST(req: NextRequest) {
     const { subjectId, topicId, initialMessage } = validation.data;
 
     // Get context information
-    let contextTitle = "General Question";
     let subjectName = null;
     let topicTitle = null;
 
@@ -117,7 +116,6 @@ export async function POST(req: NextRequest) {
       );
       if (subject) {
         subjectName = subject.name_en;
-        contextTitle = subject.name_en;
       }
     }
 
@@ -133,29 +131,12 @@ export async function POST(req: NextRequest) {
       );
       if (topic) {
         topicTitle = topic.title_en;
-        contextTitle = topic.title_en;
         if (!subjectName) subjectName = topic.subject_name;
       }
     }
 
-    // Create conversation
-    const conversationId = `conv-${user.id}-${Date.now()}`;
-
-    await query(
-      `INSERT INTO ai_conversations (id, user_id, title, context_subject_id, context_topic_id)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [conversationId, user.id, contextTitle, subjectId || null, topicId || null]
-    );
-
-    // Save user message
-    const userMessageId = `msg-${conversationId}-user-1`;
-    await query(
-      `INSERT INTO ai_messages (id, conversation_id, sender_role, content)
-       VALUES ($1, $2, 'user', $3)`,
-      [userMessageId, conversationId, initialMessage]
-    );
-
-    // Generate AI response
+    // Generate the reply before writing anything, so a failed AI call leaves no
+    // half-written conversation behind and the student can simply retry.
     const aiProvider = getAIProvider();
     const aiContext: AIContext = {
       subject: subjectName || undefined,
@@ -163,27 +144,61 @@ export async function POST(req: NextRequest) {
       language: user.preferredLanguage || "en",
     };
 
-    const aiResponse = await aiProvider.generateResponse(initialMessage, aiContext);
+    let aiReply;
+    try {
+      aiReply = await aiProvider.generateResponse(initialMessage, aiContext);
+    } catch (error) {
+      console.error("AI generation failed:", error);
+      const { message, status } = describeAIError(error);
+      return NextResponse.json({ error: message }, { status });
+    }
+
+    const conversationId = `conv-${crypto.randomUUID()}`;
+    const title = topicTitle || subjectName || initialMessage.slice(0, 60);
+
+    await query(
+      `INSERT INTO ai_conversations (id, user_id, title, context_subject_id, context_topic_id)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [conversationId, user.id, title, subjectId || null, topicId || null]
+    );
+
+    // Save user message
+    const userMessageId = `msg-${crypto.randomUUID()}`;
+    await query(
+      `INSERT INTO ai_messages (id, conversation_id, sender_role, content)
+       VALUES ($1, $2, 'user', $3)`,
+      [userMessageId, conversationId, initialMessage]
+    );
 
     // Save AI message
-    const assistantMessageId = `msg-${conversationId}-assistant-1`;
+    const assistantMessageId = `msg-${crypto.randomUUID()}`;
     await query(
       `INSERT INTO ai_messages (id, conversation_id, sender_role, content)
        VALUES ($1, $2, 'assistant', $3)`,
-      [assistantMessageId, conversationId, aiResponse]
+      [assistantMessageId, conversationId, aiReply.content]
     );
 
     // Log usage event
     await query(
       `INSERT INTO ai_usage_events (id, user_id, conversation_id, query_tokens, response_tokens)
-       VALUES ($1, $2, $3, 0, 0)`,
-      [`usage-${conversationId}-${Date.now()}`, user.id, conversationId]
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        `usage-${crypto.randomUUID()}`,
+        user.id,
+        conversationId,
+        aiReply.usage.queryTokens,
+        aiReply.usage.responseTokens,
+      ]
     );
 
     return NextResponse.json({
       conversationId,
       userMessage: { id: userMessageId, role: "user", content: initialMessage },
-      assistantMessage: { id: assistantMessageId, role: "assistant", content: aiResponse },
+      assistantMessage: {
+        id: assistantMessageId,
+        role: "assistant",
+        content: aiReply.content,
+      },
     });
   } catch (error) {
     console.error("Error creating conversation:", error);

@@ -26,7 +26,7 @@ export function LessonContent({ content, language = "en" }: LessonContentProps) 
       const text = currentBlock.join(" ").trim();
       if (text) {
         elements.push(
-          <p key={`p-${elements.length}`} className="my-3 text-sm leading-relaxed text-[#191816]">
+          <p key={`p-${elements.length}`} className="my-3 text-sm leading-relaxed text-ink-primary">
             {renderInlineMathAndFormatting(text)}
           </p>
         );
@@ -49,22 +49,22 @@ export function LessonContent({ content, language = "en" }: LessonContentProps) 
         const body = rows.slice(2); // Skip separator row
 
         elements.push(
-          <div key={`table-${elements.length}`} className="my-4 overflow-x-auto border border-[#E4E1DA] rounded">
+          <div key={`table-${elements.length}`} className="my-4 overflow-x-auto border border-surface-border rounded">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#F4F3EF] border-b border-[#E4E1DA]">
+              <thead className="bg-surface-muted border-b border-surface-border">
                 <tr>
                   {header.map((col, idx) => (
-                    <th key={idx} className="p-2.5 font-semibold text-[#191816]">
+                    <th key={idx} className="p-2.5 font-semibold text-ink-primary">
                       {renderInlineMathAndFormatting(col)}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E4E1DA]">
+              <tbody className="divide-y divide-surface-border">
                 {body.map((row, rIdx) => (
-                  <tr key={rIdx} className="hover:bg-[#FBFBFA]">
+                  <tr key={rIdx} className="hover:bg-background">
                     {row.map((cell, cIdx) => (
-                      <td key={cIdx} className="p-2.5 text-[#57534E]">
+                      <td key={cIdx} className="p-2.5 text-ink-secondary">
                         {renderInlineMathAndFormatting(cell)}
                       </td>
                     ))}
@@ -89,7 +89,7 @@ export function LessonContent({ content, language = "en" }: LessonContentProps) 
       flushTable();
       const math = line.substring(2, line.length - 2).trim();
       elements.push(
-        <div key={`math-${elements.length}`} className="my-4 py-2 px-3 bg-[#FAF8F5] border border-[#ECEAE3] rounded text-center overflow-x-auto">
+        <div key={`math-${elements.length}`} className="my-4 py-2 px-3 bg-surface-muted border border-surface-subtle rounded text-center overflow-x-auto">
           <MathView math={math} block />
         </div>
       );
@@ -100,7 +100,7 @@ export function LessonContent({ content, language = "en" }: LessonContentProps) 
       if (inMathBlock.length > 0) {
         const math = inMathBlock.join(" ").trim();
         elements.push(
-          <div key={`math-block-${elements.length}`} className="my-4 py-2 px-3 bg-[#FAF8F5] border border-[#ECEAE3] rounded text-center overflow-x-auto">
+          <div key={`math-block-${elements.length}`} className="my-4 py-2 px-3 bg-surface-muted border border-surface-subtle rounded text-center overflow-x-auto">
             <MathView math={math} block />
           </div>
         );
@@ -170,7 +170,7 @@ export function LessonContent({ content, language = "en" }: LessonContentProps) 
       elements.push(
         <h2
           key={`h2-${elements.length}`}
-          className="mt-6 mb-2 text-lg font-bold text-[#191816] border-b border-[#F4F3EF] pb-1.5"
+          className="mt-6 mb-2 text-lg font-bold text-ink-primary border-b border-surface-border pb-1.5"
         >
           {renderInlineMathAndFormatting(line.replace(/^## /, ""))}
         </h2>
@@ -183,7 +183,7 @@ export function LessonContent({ content, language = "en" }: LessonContentProps) 
       elements.push(
         <h3
           key={`h3-${elements.length}`}
-          className="mt-4 mb-1.5 text-base font-semibold text-[#191816]"
+          className="mt-4 mb-1.5 text-base font-semibold text-ink-primary"
         >
           {renderInlineMathAndFormatting(line.replace(/^### /, ""))}
         </h3>
@@ -194,7 +194,7 @@ export function LessonContent({ content, language = "en" }: LessonContentProps) 
     // Horizontal Rule
     if (line === "---" || line === "***") {
       flushParagraph();
-      elements.push(<hr key={`hr-${elements.length}`} className="my-5 border-[#E4E1DA]" />);
+      elements.push(<hr key={`hr-${elements.length}`} className="my-5 border-surface-border" />);
       continue;
     }
 
@@ -202,7 +202,7 @@ export function LessonContent({ content, language = "en" }: LessonContentProps) 
     if (line.startsWith("- ") || line.startsWith("* ")) {
       flushParagraph();
       elements.push(
-        <li key={`li-${elements.length}`} className="ml-4 list-disc text-sm text-[#191816] my-1">
+        <li key={`li-${elements.length}`} className="ml-4 list-disc text-sm text-ink-primary my-1">
           {renderInlineMathAndFormatting(line.replace(/^[-*]\s+/, ""))}
         </li>
       );
@@ -213,7 +213,7 @@ export function LessonContent({ content, language = "en" }: LessonContentProps) 
     if (/^\d+\.\s/.test(line)) {
       flushParagraph();
       elements.push(
-        <li key={`oli-${elements.length}`} className="ml-4 list-decimal text-sm text-[#191816] my-1">
+        <li key={`oli-${elements.length}`} className="ml-4 list-decimal text-sm text-ink-primary my-1">
           {renderInlineMathAndFormatting(line.replace(/^\d+\.\s+/, ""))}
         </li>
       );
@@ -250,7 +250,7 @@ export function LessonContent({ content, language = "en" }: LessonContentProps) 
     <div
       dir={isUrdu ? "rtl" : "ltr"}
       className={cn(
-        "prose-content max-w-none text-[#191816]",
+        "prose-content max-w-none text-ink-primary",
         isUrdu && "font-urdu text-right"
       )}
     >
@@ -275,7 +275,7 @@ function renderInlineMathAndFormatting(text: string): React.ReactNode[] {
       boldSegments.forEach((bSeg, bIdx) => {
         if (bSeg.startsWith("**") && bSeg.endsWith("**")) {
           parts.push(
-            <strong key={`b-${sIdx}-${bIdx}`} className="font-semibold text-[#191816]">
+            <strong key={`b-${sIdx}-${bIdx}`} className="font-semibold text-ink-primary">
               {bSeg.slice(2, -2)}
             </strong>
           );

@@ -30,16 +30,10 @@ export async function getDbClient() {
   // Fallback to embedded real PostgreSQL engine (PGlite)
   if (!pgliteInstance) {
     const { PGlite } = await import("@electric-sql/pglite");
-    const dataDir = process.env.PGLITE_DATA_DIR || "./data/pgdata";
 
-    // Ensure parent dir exists
-    const fullPath = path.resolve(process.cwd(), dataDir);
-    if (!fs.existsSync(fullPath)) {
-      fs.mkdirSync(fullPath, { recursive: true });
-    }
-
-    // Use relative path for PGlite to avoid path issues
-    pgliteInstance = new PGlite(dataDir);
+    // Use in-memory mode to avoid Windows path issues with PGlite
+    // Note: Data will be lost on server restart in development
+    pgliteInstance = new PGlite();
     await pgliteInstance.waitReady;
   }
 

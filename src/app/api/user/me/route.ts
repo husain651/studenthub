@@ -127,3 +127,38 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const { ensureDbReady } = await import("@/lib/db");
+    await ensureDbReady();
+
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { full_name } = body;
+
+    if (!full_name || full_name.trim().length < 2) {
+      return NextResponse.json(
+        { error: "Name must be at least 2 characters" },
+        { status: 400 }
+      );
+    }
+
+    await query(
+      `UPDATE users SET full_name = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+      [full_name.trim(), user.id]
+    );
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

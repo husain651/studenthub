@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { BookOpen, LogOut, Menu, X, User, ShieldAlert } from "lucide-react";
 import { LanguageSwitcher } from "./language-switcher";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface NavbarProps {
   user?: {
@@ -75,6 +76,7 @@ export function Navbar({ user }: NavbarProps) {
 
         {/* Right Section: Language switcher & Auth buttons */}
         <div className="hidden md:flex items-center gap-3">
+          <ThemeToggle />
           <LanguageSwitcher currentLanguage={user?.preferredLanguage || "en"} />
 
           {user ? (
@@ -123,6 +125,7 @@ export function Navbar({ user }: NavbarProps) {
 
         {/* Mobile menu trigger */}
         <div className="flex md:hidden items-center gap-2">
+          <ThemeToggle />
           <LanguageSwitcher currentLanguage={user?.preferredLanguage || "en"} />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
